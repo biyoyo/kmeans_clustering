@@ -3,6 +3,8 @@
 #include <sstream>
 #include <vector>
 #include <string>
+#include <random>
+#include <limits>
 
 using namespace std;
 
@@ -46,21 +48,60 @@ class KMeans
         file.close();
     }
 
+    void initialize_centroids()
+    {
+        random_device rd;
+        mt19937 gen(rd());
+        uniform_int_distribution<> distro(0, clusters_count - 1);
+
+        for(int i = 0; i < clusters_count; i++)
+        {
+            centroids.push_back(points[distro(gen)]);
+        }
+    }
+
+    void assign_to_class()
+    {
+        for(Point &p : points)
+        {
+            double min_distance = numeric_limits<int>::max(); 
+            for(int i = 0; i < centroids.size(); i++)
+            {
+                double distance = (centroids[i].x - p.x) * (centroids[i].x - p.x) + (centroids[i].y - p.y) * (centroids[i].y - p.y);
+                if(distance < min_distance)
+                {
+                    p.cluster_id = i;
+                    min_distance = distance;
+                }
+            }
+        }
+    }
+
+    void clusterize()
+    {
+        initialize_centroids();
+    }
+
     struct Point
     {
         double x, y;
+        int cluster_id = -1;
     };
     
     private:
     vector<Point> points;
     int clusters_count;
+    vector<Point> centroids;
 };
 
 int main()
 {
     string file_name;
     int clusters_count;
-    cin >> file_name >> clusters_count;
-    KMeans(file_name, clusters_count);
+    //cin >> file_name >> clusters_count;
+    KMeans k("normal.txt", 4);
+    //KMeans k(file_name, clusters_count);
+    k.clusterize();
+    k.assign_to_class();
     return 0;
 }
