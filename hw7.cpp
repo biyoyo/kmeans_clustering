@@ -83,14 +83,59 @@ public:
         }
     }
 
+    void kmeans_plus_plus()
+    {
+        random_device rd;
+        mt19937 gen(rd());
+        uniform_int_distribution<> distro(0, clusters_count - 1);
+
+        centroids.push_back(points[distro(gen)]);
+
+        for (int i = 0; i < clusters_count - 1; i++)
+        {
+            vector<double> min_distances;
+            for (int j = 0; j < points.size(); j++)
+            {
+                double min_distance = numeric_limits<long double>::max();
+                for (int k = 0; k < centroids.size(); k++)
+                {
+                    double distance = point_distance(centroids[k], points[j]);
+                    if(distance < min_distance)
+                    {
+                        min_distance = distance;
+                    }
+                }
+                min_distances.push_back(min_distance);
+            }
+
+            double max_distance = numeric_limits<long double>::min();
+            int next_centroid_index;
+            for(int l = 0; l < min_distances.size(); l++)
+            {
+                if(min_distances[l] > max_distance)
+                {
+                    max_distance = min_distances[l];
+                    next_centroid_index = l;
+                }
+            }
+            centroids.push_back(points[next_centroid_index]);
+        }
+        cout << "clusters: " << clusters_count << " centroids size: " <<centroids.size() << endl;
+
+        for (Point &p : points)
+        {
+            p.cluster_id = distro(gen);
+        }
+    }
+
     void assign_to_class()
     {
         for (Point &p : points)
         {
-            double min_distance = numeric_limits<long int>::max();
+            double min_distance = numeric_limits<long double>::max();
             for (int i = 0; i < centroids.size(); i++)
             {
-                double distance = (centroids[i].x - p.x) * (centroids[i].x - p.x) + (centroids[i].y - p.y) * (centroids[i].y - p.y);
+                double distance = point_distance(p, centroids[i]);
                 if (distance < min_distance)
                 {
                     p.cluster_id = i;
@@ -125,7 +170,8 @@ public:
 
     void clusterize()
     {
-        initialize();
+        //initialize();
+        kmeans_plus_plus();
         int random_restarts = 0;
         do
         {
@@ -160,8 +206,7 @@ public:
 
         for (const Point &p : points)
         {
-            double distance = (p.x - centroids[p.cluster_id].x) * (p.x - centroids[p.cluster_id].x) +
-                              (p.y - centroids[p.cluster_id].y) * (p.y - centroids[p.cluster_id].y);
+            double distance = point_distance(p, centroids[p.cluster_id]);
             within_distances[p.cluster_id] += distance;
         }
         return within_distances;
@@ -222,6 +267,11 @@ public:
         int cluster_id = -1;
     };
 
+    double point_distance(const Point &p1, const Point &p2)
+    {
+        return (p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y);
+    }
+
 private:
     vector<Point> points;
     int clusters_count;
@@ -234,7 +284,7 @@ int main()
     int clusters_count;
     //cin >> file_name >> clusters_count;
     //KMeans k(file_name, clusters_count);
-    KMeans k("normal.txt", 4);
+    KMeans k("unbalance.txt", 8);
     k.clusterize();
     k.write_results_to_file("results.txt");
     return 0;
