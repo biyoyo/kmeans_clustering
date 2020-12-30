@@ -17,7 +17,7 @@ public:
         read_from_file(file_name);
     }
 
-    void read_from_file(string file_name)
+    void read_from_file(const string &file_name)
     {
         ifstream file(file_name);
 
@@ -47,6 +47,21 @@ public:
             points.push_back(point);
         }
         file.close();
+    }
+
+    void write_results_to_file(const string &file_name)
+    {
+        ofstream file(file_name, ios::trunc);
+
+        if (!file)
+        {
+            cout << "Error opening file for writing" << endl;
+        }
+
+        for(const Point &p : points)
+        {
+            file << p.x << " " << p.y << " " << p.cluster_id << "\n";
+        }
     }
 
     void initialize_centroids()
@@ -136,5 +151,6 @@ int main()
     //KMeans k(file_name, clusters_count);
     k.clusterize();
     //k.assign_to_class();
+    k.write_results_to_file("results.txt");
     return 0;
 }
