@@ -60,14 +60,11 @@ public:
             int random_index = distro(gen);
             centroids.push_back(points[random_index]);
             points[random_index].cluster_id = i;
-            cout << points[random_index].x << " ";
         }
-        cout << endl;
     }
 
-    bool assign_to_class()
+    void assign_to_class()
     {
-        bool changes = false;
         for (Point &p : points)
         {
             double min_distance = numeric_limits<int>::max();
@@ -78,11 +75,9 @@ public:
                 {
                     p.cluster_id = i;
                     min_distance = distance;
-                    changes = true;
                 }
             }
         }
-        return changes;
     }
 
     void calculate_means()
@@ -111,12 +106,13 @@ public:
     void clusterize()
     {
         initialize_centroids();
-        bool changes;
+        int iterations = 0;
         do
         {
-            changes = assign_to_class();
+            assign_to_class();
             calculate_means();
-        } while (changes);
+            iterations++;
+        } while (iterations != 300);
     }
 
     struct Point
