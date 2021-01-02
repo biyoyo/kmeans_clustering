@@ -89,6 +89,8 @@ public:
         mt19937 gen(rd());
         uniform_int_distribution<> distro(0, clusters_count - 1);
 
+        centroids.clear();
+
         centroids.push_back(points[distro(gen)]);
 
         for (int i = 0; i < clusters_count - 1; i++)
@@ -172,11 +174,11 @@ public:
         //initialize();
         kmeans_plus_plus();
 
-        int random_restarts = 5;
+        int random_restarts = 50;
         for(int i = 0; i < random_restarts; i++)
         {
             vector<int> prev_result = get_current_assignments();
-            vector<double> prev_grade = within_cluster_distances();
+            double prev_error = within_cluster_distances();
 
             random_restart();
 
@@ -188,37 +190,31 @@ public:
             }
 
             vector<int> new_result = get_current_assignments();
-            vector<double> new_grade = within_cluster_distances();
+            double new_error = within_cluster_distances();
 
-            if (compare_clusters(prev_grade, new_grade) == true)
+            if(prev_error < new_error)
             {
                 set_better_assignments(prev_result);
             }
         }
     }
 
-    vector<double> within_cluster_distances()
+    double within_cluster_distances()
     {
-        vector<double> within_distances(clusters_count, 0);
-        vector<int> points_in_cluster(clusters_count, 0);
+        double error = 0;
 
         for (const Point &p : points)
         {
-            double distance = point_distance(p, centroids[p.cluster_id]);
-            within_distances[p.cluster_id] += distance;
-            points_in_cluster[p.cluster_id]++;
+            error += point_distance(p, centroids[p.cluster_id]);
         }
 
-        for(int i = 0; i < clusters_count; i++)
-        {
-            within_distances[i] /= (double)points_in_cluster[i];
-        }
-
-        return within_distances;
+        return error;
     }
 
     void random_restart()
     {
+        kmeans_plus_plus();
+        /*
         random_device rd;
         mt19937 gen(rd());
         uniform_int_distribution<> distro(0, clusters_count - 1);
@@ -227,35 +223,13 @@ public:
         {
             p.cluster_id = distro(gen);
         }
-    }
 
-    //result with more thight clusters wins
-    static bool compare_clusters(const vector<double> &result1, const vector<double> &result2)
-    {
-        double a = 0, b = 0;
-
-        for(int i = 0; i < result1.size(); i++)
+        uniform_int_distribution<> distro1(0, points.size() - 1);
+        for(Point &p : centroids)
         {
-            a += result1[i];
-            b += result2[i];
+            p = points[distro1(gen)];
         }
-        /*
-        int successes1 = 0, successes2 = 0;
-
-        for (int i = 0; i < result1.size(); i++)
-        {
-            if (result1[i] <= result2[i])
-            {
-                successes1++;
-            }
-            else
-            {
-                successes2++;
-            }
-        }
-        return successes1 > successes2;
         */
-       return a < b;
     }
 
     vector<int> get_current_assignments()
