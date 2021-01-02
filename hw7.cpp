@@ -96,7 +96,7 @@ public:
             vector<double> min_distances;
             for (int j = 0; j < points.size(); j++)
             {
-                double min_distance = numeric_limits<long double>::max();
+                double min_distance = numeric_limits<double>::infinity();
                 for (int k = 0; k < centroids.size(); k++)
                 {
                     double distance = point_distance(centroids[k], points[j]);
@@ -108,7 +108,7 @@ public:
                 min_distances.push_back(min_distance);
             }
 
-            double max_distance = numeric_limits<long double>::min();
+            double max_distance = -numeric_limits<double>::infinity();
             int next_centroid_index;
             for(int l = 0; l < min_distances.size(); l++)
             {
@@ -120,7 +120,6 @@ public:
             }
             centroids.push_back(points[next_centroid_index]);
         }
-        cout << "clusters: " << clusters_count << " centroids size: " <<centroids.size() << endl;
 
         for (Point &p : points)
         {
@@ -132,7 +131,7 @@ public:
     {
         for (Point &p : points)
         {
-            double min_distance = numeric_limits<long double>::max();
+            double min_distance = numeric_limits<double>::infinity();
             for (int i = 0; i < centroids.size(); i++)
             {
                 double distance = point_distance(p, centroids[i]);
@@ -172,20 +171,21 @@ public:
     {
         //initialize();
         kmeans_plus_plus();
-        int random_restarts = 0;
-        do
+
+        int random_restarts = 5;
+        for(int i = 0; i < random_restarts; i++)
         {
             vector<int> prev_result = get_current_assignments();
             vector<double> prev_grade = within_cluster_distances();
+
             random_restart();
 
-            int iterations = 0;
-            do
+            int iterations = 300;
+            for(int j = 0; j < iterations; j++)
             {
                 assign_to_class();
                 calculate_means();
-                iterations++;
-            } while (iterations != 300);
+            }
 
             vector<int> new_result = get_current_assignments();
             vector<double> new_grade = within_cluster_distances();
@@ -194,21 +194,26 @@ public:
             {
                 set_better_assignments(prev_result);
             }
-
-            random_restarts++;
-
-        } while (random_restarts != 5);
+        }
     }
 
     vector<double> within_cluster_distances()
     {
         vector<double> within_distances(clusters_count, 0);
+        vector<int> points_in_cluster(clusters_count, 0);
 
         for (const Point &p : points)
         {
             double distance = point_distance(p, centroids[p.cluster_id]);
             within_distances[p.cluster_id] += distance;
+            points_in_cluster[p.cluster_id]++;
         }
+
+        for(int i = 0; i < clusters_count; i++)
+        {
+            within_distances[i] /= (double)points_in_cluster[i];
+        }
+
         return within_distances;
     }
 
@@ -227,6 +232,14 @@ public:
     //result with more thight clusters wins
     static bool compare_clusters(const vector<double> &result1, const vector<double> &result2)
     {
+        double a = 0, b = 0;
+
+        for(int i = 0; i < result1.size(); i++)
+        {
+            a += result1[i];
+            b += result2[i];
+        }
+        /*
         int successes1 = 0, successes2 = 0;
 
         for (int i = 0; i < result1.size(); i++)
@@ -241,6 +254,8 @@ public:
             }
         }
         return successes1 > successes2;
+        */
+       return a < b;
     }
 
     vector<int> get_current_assignments()
@@ -282,9 +297,8 @@ int main()
 {
     string file_name;
     int clusters_count;
-    //cin >> file_name >> clusters_count;
-    //KMeans k(file_name, clusters_count);
-    KMeans k("unbalance.txt", 8);
+    cin >> file_name >> clusters_count;
+    KMeans k(file_name, clusters_count);
     k.clusterize();
     k.write_results_to_file("results.txt");
     return 0;
