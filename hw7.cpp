@@ -1,6 +1,5 @@
 #include <iostream>
 #include <fstream>
-#include <sstream>
 #include <vector>
 #include <string>
 #include <random>
@@ -16,6 +15,12 @@ public:
     {
         read_from_file(file_name);
     }
+
+    struct Point
+    {
+        double x, y;
+        int cluster_id = -1;
+    };
 
     void read_from_file(const string &file_name)
     {
@@ -216,23 +221,14 @@ public:
 
     void random_restart()
     {
-        kmeans_plus_plus();
-        /*
         random_device rd;
         mt19937 gen(rd());
-        uniform_int_distribution<> distro(0, clusters_count - 1);
+        uniform_int_distribution<> distro(0, points.size() - 1);
 
-        for (Point &p : points)
+        for(auto &c : centroids)
         {
-            p.cluster_id = distro(gen);
+            c = points[distro(gen)];
         }
-
-        uniform_int_distribution<> distro1(0, points.size() - 1);
-        for(Point &p : centroids)
-        {
-            p = points[distro1(gen)];
-        }
-        */
     }
 
     vector<int> get_current_assignments()
@@ -276,7 +272,8 @@ int main()
     int clusters_count;
     cin >> file_name >> clusters_count;
     KMeans k(file_name, clusters_count);
-    k.clusterize();
+    //k.standard_kmeans();
+    k.kmeans_plus_plus();
     k.write_results_to_file("results.txt");
     return 0;
 }
