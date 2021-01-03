@@ -83,13 +83,11 @@ public:
         }
     }
 
-    void kmeans_plus_plus()
+    void kmeans_plus_plus_init()
     {
         random_device rd;
         mt19937 gen(rd());
-        uniform_int_distribution<> distro(0, clusters_count - 1);
-
-        centroids.clear();
+        uniform_int_distribution<> distro(0, points.size() - 1);
 
         centroids.push_back(points[distro(gen)]);
 
@@ -121,11 +119,6 @@ public:
                 }
             }
             centroids.push_back(points[next_centroid_index]);
-        }
-
-        for (Point &p : points)
-        {
-            p.cluster_id = distro(gen);
         }
     }
 
@@ -169,33 +162,43 @@ public:
         }
     }
 
-    void clusterize()
+    void standard_kmeans()
     {
-        //initialize();
-        kmeans_plus_plus();
+        initialize();
 
-        int random_restarts = 50;
+        int random_restarts = 100;
         for(int i = 0; i < random_restarts; i++)
         {
             vector<int> prev_result = get_current_assignments();
+            vector<Point> prev_centroids = centroids;
             double prev_error = within_cluster_distances();
 
             random_restart();
 
-            int iterations = 300;
+            int iterations = 100;
             for(int j = 0; j < iterations; j++)
             {
                 assign_to_class();
                 calculate_means();
             }
 
-            vector<int> new_result = get_current_assignments();
             double new_error = within_cluster_distances();
-
             if(prev_error < new_error)
             {
-                set_better_assignments(prev_result);
+                set_better_assignments(prev_result, prev_centroids);
             }
+        }
+    }
+
+    void kmeans_plus_plus()
+    {
+        kmeans_plus_plus_init();
+
+        int iterations = 300;
+        for (int j = 0; j < iterations; j++)
+        {
+            assign_to_class();
+            calculate_means();
         }
     }
 
