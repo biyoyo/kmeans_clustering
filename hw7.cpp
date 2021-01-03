@@ -241,19 +241,19 @@ public:
         return result;
     }
 
-    void set_better_assignments(const vector<int> &assignments)
+    void set_better_assignments(const vector<int> &assignments, const vector<Point> &new_centroids)
     {
         for (int i = 0; i < assignments.size(); i++)
         {
             points[i].cluster_id = assignments[i];
         }
+
+        for(int i = 0; i < centroids.size(); i++)
+        {
+            centroids[i] = new_centroids[i];
+        }
     }
 
-    struct Point
-    {
-        double x, y;
-        int cluster_id = -1;
-    };
 
     double point_distance(const Point &p1, const Point &p2)
     {
