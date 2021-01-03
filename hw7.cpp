@@ -94,6 +94,8 @@ public:
         mt19937 gen(rd());
         uniform_int_distribution<> distro(0, points.size() - 1);
 
+        centroids.clear();
+
         centroids.push_back(points[distro(gen)]);
 
         for (int i = 0; i < clusters_count - 1; i++)
@@ -197,18 +199,37 @@ public:
 
     void kmeans_plus_plus()
     {
-        kmeans_plus_plus_init();
-
-        int iterations = 300;
-        for (int j = 0; j < iterations; j++)
+        int restarts = 20;
+        for(int i = 0; i < restarts; i++)
         {
-            assign_to_class();
-            calculate_means();
+            vector<int> prev_result = get_current_assignments();
+            vector<Point> prev_centroids = centroids;
+            double prev_error = within_cluster_distances();
+
+            kmeans_plus_plus_init();
+
+            int iterations = 100;
+            for (int j = 0; j < iterations; j++)
+            {
+                assign_to_class();
+                calculate_means();
+            }
+
+            double new_error = within_cluster_distances();
+            if(prev_error < new_error)
+            {
+                set_better_assignments(prev_result, prev_centroids);
+            }
         }
     }
 
     double within_cluster_distances()
     {
+        if(centroids.empty())
+        {
+            return numeric_limits<double>::infinity();
+        }
+
         double error = 0;
 
         for (const Point &p : points)
@@ -272,8 +293,8 @@ int main()
     int clusters_count;
     cin >> file_name >> clusters_count;
     KMeans k(file_name, clusters_count);
-    //k.standard_kmeans();
-    k.kmeans_plus_plus();
+    k.standard_kmeans();
+    //k.kmeans_plus_plus();
     k.write_results_to_file("results.txt");
     return 0;
 }
